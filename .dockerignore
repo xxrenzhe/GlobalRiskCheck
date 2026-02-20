@@ -1,0 +1,32 @@
+# Node
+node_modules/
+
+# Next.js
+.next/
+out/
+build/
+dist/
+
+# Logs
+*.log
+
+# VCS
+.git/
+.gitignore
+
+# Docs and secrets (must not be packaged)
+docs/
+secrets/
+
+# Local env
+.env
+.env.*
+
+# Editor
+.DS_Store
+.vscode/
+.idea/
+
+# Tests
+__tests__/
+coverage/
