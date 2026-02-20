@@ -39,8 +39,6 @@ const scanLines = [
 
 const randomDuration = () => 8000 + Math.floor(Math.random() * 4000);
 
-const resolveSettled = <T,>(result: PromiseSettledResult<T>) =>
-  result.status === "fulfilled" ? result.value : null;
 
 export default function ScanExperience() {
   const [stage, setStage] = useState<"idle" | "scanning" | "done">("idle");
@@ -56,11 +54,14 @@ export default function ScanExperience() {
     const language = navigator.language || "";
 
     const creep = detectCreep();
-    const [ipQuality, fingerprint, webrtc] = await Promise.allSettled([
+    const [ipResult, fingerprintResult, webrtcResult] = await Promise.allSettled([
       fetchIpQuality(),
       getFingerprint(),
       detectWebRTCLeak()
-    ]).then((results) => results.map(resolveSettled));
+    ]);
+    const ipQuality = ipResult.status === "fulfilled" ? ipResult.value : null;
+    const fingerprint = fingerprintResult.status === "fulfilled" ? fingerprintResult.value : null;
+    const webrtc = webrtcResult.status === "fulfilled" ? webrtcResult.value : null;
 
     return {
       ipQuality,
