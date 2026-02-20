@@ -1,5 +1,6 @@
-import { ScanFinding, ScanPayload, ScoreResult } from "@/lib/types";
+import { ScanFinding, ScanPayload, ScoreResult, ScenarioId } from "@/lib/types";
 import { getRuntimeConfig } from "@/lib/runtimeConfig";
+import { getScenarioConfig } from "@/lib/scenario";
 
 const clampScore = (score: number) => Math.max(0, Math.min(100, score));
 
@@ -11,8 +12,9 @@ const formatIpDetail = (payload: ScanPayload) => {
   return `检测节点: ${ip} / ${isp || "未知 ISP"} / ${asn || "未知 ASN"}`;
 };
 
-export const buildFindings = (payload: ScanPayload): ScanFinding[] => {
+export const buildFindings = (payload: ScanPayload, scenarioId: ScenarioId): ScanFinding[] => {
   const config = getRuntimeConfig();
+  const scenario = getScenarioConfig(scenarioId);
   const hostingRisk = !!payload.ipQuality?.hosting || !!payload.ipQuality?.proxy;
   const creepTriggered = !!payload.creep?.canvasNoise || !!payload.creep?.webdriver || !!payload.creep?.mathLie;
   const webrtcTriggered = !!payload.webrtc?.leakDetected;
@@ -32,7 +34,7 @@ export const buildFindings = (payload: ScanPayload): ScanFinding[] => {
       label: "机房/代理 IP 暴露",
       severity: "critical",
       triggered: hostingRisk,
-      deduction: config.scoring.hostingDeduction,
+      deduction: Math.round(config.scoring.hostingDeduction * scenario.weights.hosting),
       detail: config.messages.hosting
     },
     {
@@ -40,7 +42,7 @@ export const buildFindings = (payload: ScanPayload): ScanFinding[] => {
       label: "CreepJS 指纹欺骗",
       severity: "critical",
       triggered: creepTriggered,
-      deduction: config.scoring.creepDeduction,
+      deduction: Math.round(config.scoring.creepDeduction * scenario.weights.creep),
       detail: config.messages.creep
     },
     {
@@ -48,7 +50,7 @@ export const buildFindings = (payload: ScanPayload): ScanFinding[] => {
       label: "WebRTC 真实 IP 泄露",
       severity: "warning",
       triggered: webrtcTriggered,
-      deduction: config.scoring.webrtcDeduction,
+      deduction: Math.round(config.scoring.webrtcDeduction * scenario.weights.webrtc),
       detail: config.messages.webrtc
     },
     {
@@ -56,7 +58,7 @@ export const buildFindings = (payload: ScanPayload): ScanFinding[] => {
       label: "硬件与时区关联风险",
       severity: "warning",
       triggered: deviceTriggered,
-      deduction: config.scoring.deviceDeduction,
+      deduction: Math.round(config.scoring.deviceDeduction * scenario.weights.device),
       detail: config.messages.device
     }
   ].map((finding) => {
@@ -77,8 +79,8 @@ export const buildFindings = (payload: ScanPayload): ScanFinding[] => {
   });
 };
 
-export const scorePayload = (payload: ScanPayload): ScoreResult => {
-  const findings = buildFindings(payload);
+export const scorePayload = (payload: ScanPayload, scenarioId: ScenarioId): ScoreResult => {
+  const findings = buildFindings(payload, scenarioId);
   const deduction = findings.reduce(
     (sum, item) => (item.triggered ? sum + item.deduction : sum),
     0
@@ -96,6 +98,7 @@ export const scorePayload = (payload: ScanPayload): ScoreResult => {
   return {
     score,
     level,
-    findings
+    findings,
+    scenarioId
   };
 };

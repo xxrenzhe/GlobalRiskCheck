@@ -1,5 +1,7 @@
 export type RiskLevel = "A" | "B" | "C" | "D";
 
+export type ScenarioId = "tiktok" | "amazon" | "indie";
+
 export type ScanFinding = {
   key:
     | "hostingIp"
@@ -17,6 +19,7 @@ export type ScoreResult = {
   score: number;
   level: RiskLevel;
   findings: ScanFinding[];
+  scenarioId?: ScenarioId;
 };
 
 export type IpQualityResult = {

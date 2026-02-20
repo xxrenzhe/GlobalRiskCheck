@@ -5,6 +5,9 @@ import TerminalScan from "@/components/TerminalScan";
 import ScorePanel from "@/components/ScorePanel";
 import FindingsList from "@/components/FindingsList";
 import Offers from "@/components/Offers";
+import ScenarioSelector from "@/components/ScenarioSelector";
+import EvidencePanel from "@/components/EvidencePanel";
+import ShareActions from "@/components/ShareActions";
 import { detectCreep } from "@/lib/creep";
 import { getFingerprint } from "@/lib/fingerprint";
 import { detectWebRTCLeak } from "@/lib/webrtc";
@@ -12,7 +15,8 @@ import { fetchIpQuality } from "@/lib/ipQuality";
 import { isTimezoneMismatch } from "@/lib/timezone";
 import { scorePayload } from "@/lib/scoring";
 import { createWatermark } from "@/lib/watermark";
-import { ScanPayload, ScoreResult } from "@/lib/types";
+import { ScanPayload, ScenarioId, ScoreResult } from "@/lib/types";
+import { getScenarioConfig } from "@/lib/scenario";
 
 const scanLines = [
   "[OK] Injecting JS Probes...",
@@ -43,7 +47,9 @@ export default function ScanExperience() {
   const [logs, setLogs] = useState<string[]>([]);
   const [progress, setProgress] = useState(0);
   const [result, setResult] = useState<ScoreResult | null>(null);
+  const [payload, setPayload] = useState<ScanPayload | null>(null);
   const [watermark, setWatermark] = useState<string>("");
+  const [scenarioId, setScenarioId] = useState<ScenarioId>("tiktok");
 
   const runScan = async (): Promise<ScanPayload> => {
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -73,6 +79,7 @@ export default function ScanExperience() {
     setLogs([]);
     setProgress(0);
     setResult(null);
+    setPayload(null);
 
     const duration = randomDuration();
     const interval = Math.max(120, Math.floor(duration / scanLines.length));
@@ -99,8 +106,9 @@ export default function ScanExperience() {
     setProgress(100);
     setLogs(scanLines);
 
-    const scored = scorePayload(payload);
+    const scored = scorePayload(payload, scenarioId);
     setResult(scored);
+    setPayload(payload);
     setStage("done");
 
     const timestamp = new Date().toISOString().replace("T", " ").slice(0, 19);
@@ -109,6 +117,8 @@ export default function ScanExperience() {
     const watermarkUrl = createWatermark(watermarkText);
     setWatermark(watermarkUrl);
   };
+
+  const scenario = useMemo(() => getScenarioConfig(scenarioId), [scenarioId]);
 
   const scoreHighlight = useMemo(() => {
     if (!result) return "";
@@ -124,6 +134,16 @@ export default function ScanExperience() {
           <p className="mt-2 text-sm text-slate-300">
             扫描过程中将持续构建指纹与 IP 信誉模型，请勿关闭页面。
           </p>
+          <div className="mt-4">
+            <ScenarioSelector
+              value={scenarioId}
+              onChange={setScenarioId}
+              disabled={stage === "scanning"}
+            />
+            <p className="mt-2 text-xs text-slate-400">
+              当前场景：{scenario.label} · 平均分 {scenario.avgScore} · 高危率 {scenario.riskRate}
+            </p>
+          </div>
         </div>
         <button
           type="button"
@@ -151,12 +171,25 @@ export default function ScanExperience() {
               <p className="text-xs uppercase tracking-[0.3em] text-slate-400">最终评分</p>
               <span className={`text-sm font-semibold ${scoreHighlight}`}>风险指数已锁定</span>
             </div>
+            <p className="mt-2 text-xs text-slate-400">场景：{scenario.label}</p>
             <div className="mt-6">
               <ScorePanel result={result} />
             </div>
             <div className="mt-6">
               <FindingsList findings={result.findings} />
             </div>
+            {payload ? (
+              <div className="mt-8">
+                <p className="text-xs uppercase tracking-[0.3em] text-neon">Evidence</p>
+                <h3 className="mt-2 text-lg font-semibold text-white">证据快照</h3>
+                <p className="mt-1 text-xs text-slate-400">
+                  以下为检测证据链截图，用于验证风险触发原因。
+                </p>
+                <div className="mt-4">
+                  <EvidencePanel payload={payload} />
+                </div>
+              </div>
+            ) : null}
           </div>
 
           <section id="solutions" className="space-y-4">
@@ -166,6 +199,8 @@ export default function ScanExperience() {
             </div>
             <Offers result={result} />
           </section>
+
+          {payload ? <ShareActions result={result} payload={payload} scenarioId={scenarioId} /> : null}
         </div>
       ) : null}
     </section>
