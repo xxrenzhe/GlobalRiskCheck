@@ -31,7 +31,7 @@ jobs:
       - name: Prepare tags
         id: meta
         run: |
-          IMAGE="ghcr.io/xxrenzhe/GlobalRiskCheck"
+          IMAGE="ghcr.io/xxrenzhe/globalriskcheck"
           if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
             TAGS="${IMAGE}:prod-${GITHUB_REF_NAME},${IMAGE}:prod-${GITHUB_SHA}"
           else
