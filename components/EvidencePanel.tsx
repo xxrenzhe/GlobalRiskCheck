@@ -54,9 +54,11 @@ export default function EvidencePanel({ payload }: Props) {
         <p className="mt-2 text-sm font-semibold text-white">设备指纹证据</p>
         <div className="mt-3 space-y-2 text-xs text-slate-300">
           <p>VisitorID: {payload.fingerprint?.visitorId || "未知"}</p>
-          <p>CPU 核心: {payload.fingerprint?.components?.hardwareConcurrency || "未知"}</p>
-          <p>内存: {payload.fingerprint?.components?.deviceMemory || "未知"}</p>
-          <p>色深: {payload.fingerprint?.components?.colorDepth || "未知"}</p>
+          <p>
+            CPU 核心: {(payload.fingerprint?.components?.hardwareConcurrency as any) || "未知"}
+          </p>
+          <p>内存: {(payload.fingerprint?.components?.deviceMemory as any) || "未知"}</p>
+          <p>色深: {(payload.fingerprint?.components?.colorDepth as any) || "未知"}</p>
           <p>时区/语言: {payload.tzMismatch ? "不匹配" : "匹配"}</p>
         </div>
       </div>
