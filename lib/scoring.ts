@@ -28,7 +28,7 @@ export const buildFindings = (payload: ScanPayload, scenarioId: ScenarioId): Sca
     .filter(Boolean)
     .join("；");
 
-  return [
+  const baseFindings: ScanFinding[] = [
     {
       key: "hostingIp",
       label: "机房/代理 IP 暴露",
@@ -61,7 +61,9 @@ export const buildFindings = (payload: ScanPayload, scenarioId: ScenarioId): Sca
       deduction: Math.round(config.scoring.deviceDeduction * scenario.weights.device),
       detail: config.messages.device
     }
-  ].map((finding) => {
+  ];
+
+  return baseFindings.map((finding) => {
     let detail = finding.detail;
     if (finding.key === "hostingIp") {
       detail = `${detail} ${formatIpDetail(payload)}`;
