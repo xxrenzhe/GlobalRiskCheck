@@ -1,4 +1,4 @@
-\"use client\";
+"use client";
 
 import { ScoreResult } from "@/lib/types";
 

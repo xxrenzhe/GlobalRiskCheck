@@ -1,4 +1,4 @@
-\"use client\";
+"use client";
 
 import { getRuntimeConfig } from "@/lib/runtimeConfig";
 import { ScoreResult } from "@/lib/types";
