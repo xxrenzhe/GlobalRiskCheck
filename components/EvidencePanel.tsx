@@ -25,9 +25,27 @@ export default function EvidencePanel({ payload }: Props) {
           <p>IP: {payload.ipQuality?.ip || "未知"}</p>
           <p>ISP: {payload.ipQuality?.isp || "未知"}</p>
           <p>ASN: {payload.ipQuality?.asn || "未知"}</p>
+          <p>ORG: {payload.ipQuality?.org || "未知"}</p>
+          <p>类型: {payload.ipQuality?.ipTypeLabel || "未知"}</p>
           <p>Hosting: {boolLabel(payload.ipQuality?.hosting)}</p>
-          <p>Proxy: {boolLabel(payload.ipQuality?.proxy)}</p>
-          <p>Country: {payload.ipQuality?.country || "未知"}</p>
+          <p>Proxy/VPN: {boolLabel(payload.ipQuality?.proxy || payload.ipQuality?.vpn)}</p>
+          <p>Mobile: {boolLabel(payload.ipQuality?.mobile)}</p>
+          <p>Country: {payload.ipQuality?.country || payload.ipQuality?.countryCode || "未知"}</p>
+          <p>City: {payload.ipQuality?.city || payload.ipQuality?.region || "未知"}</p>
+          <p>来源: {payload.ipQuality?.source || "未知"}</p>
+          <p>
+            欺诈分:{" "}
+            {typeof payload.ipQuality?.riskScore === "number"
+              ? `${payload.ipQuality.riskScore}/100`
+              : "未知"}
+          </p>
+          <p>
+            Abuse:{" "}
+            {typeof payload.ipQuality?.abuseConfidence === "number"
+              ? `${payload.ipQuality.abuseConfidence}%`
+              : "未知"}
+          </p>
+          <p>Abuse 报告: {payload.ipQuality?.abuseReports ?? "未知"}</p>
         </div>
       </div>
       <div className="rounded-2xl border border-white/10 bg-black/60 p-5">
@@ -54,11 +72,6 @@ export default function EvidencePanel({ payload }: Props) {
         <p className="mt-2 text-sm font-semibold text-white">设备指纹证据</p>
         <div className="mt-3 space-y-2 text-xs text-slate-300">
           <p>VisitorID: {payload.fingerprint?.visitorId || "未知"}</p>
-          <p>
-            CPU 核心: {(payload.fingerprint?.components?.hardwareConcurrency as any) || "未知"}
-          </p>
-          <p>内存: {(payload.fingerprint?.components?.deviceMemory as any) || "未知"}</p>
-          <p>色深: {(payload.fingerprint?.components?.colorDepth as any) || "未知"}</p>
           <p>时区/语言: {payload.tzMismatch ? "不匹配" : "匹配"}</p>
         </div>
       </div>

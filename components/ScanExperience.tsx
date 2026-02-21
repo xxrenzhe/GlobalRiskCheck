@@ -39,7 +39,6 @@ const scanLines = [
 
 const randomDuration = () => 8000 + Math.floor(Math.random() * 4000);
 
-
 export default function ScanExperience() {
   const [stage, setStage] = useState<"idle" | "scanning" | "done">("idle");
   const [logs, setLogs] = useState<string[]>([]);

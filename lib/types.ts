@@ -28,7 +28,19 @@ export type IpQualityResult = {
   proxy: boolean;
   isp?: string;
   asn?: string;
+  org?: string;
   country?: string;
+  countryCode?: string;
+  city?: string;
+  region?: string;
+  mobile?: boolean;
+  vpn?: boolean;
+  tor?: boolean;
+  ipType?: "residential" | "hosting" | "mobile" | "vpn" | "unknown";
+  ipTypeLabel?: string;
+  riskScore?: number;
+  abuseConfidence?: number;
+  abuseReports?: number;
   source?: string;
 };
 

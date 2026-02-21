@@ -8,14 +8,39 @@ const formatIpDetail = (payload: ScanPayload) => {
   if (!payload.ipQuality) {
     return "⚠️ IP 质量检测失败，请重试或更换网络。";
   }
-  const { ip, isp, asn } = payload.ipQuality;
-  return `检测节点: ${ip} / ${isp || "未知 ISP"} / ${asn || "未知 ASN"}`;
+  const { ip, isp, asn, ipTypeLabel, riskScore, abuseConfidence, source } = payload.ipQuality;
+  const segments = [
+    `检测节点: ${ip} / ${isp || "未知 ISP"} / ${asn || "未知 ASN"}`
+  ];
+  if (ipTypeLabel) segments.push(`类型: ${ipTypeLabel}`);
+  if (typeof riskScore === "number") segments.push(`欺诈分: ${riskScore}/100`);
+  if (typeof abuseConfidence === "number") segments.push(`Abuse: ${abuseConfidence}%`);
+  if (source) segments.push(`来源: ${source}`);
+  return segments.join(" | ");
 };
 
 export const buildFindings = (payload: ScanPayload, scenarioId: ScenarioId): ScanFinding[] => {
   const config = getRuntimeConfig();
   const scenario = getScenarioConfig(scenarioId);
-  const hostingRisk = !!payload.ipQuality?.hosting || !!payload.ipQuality?.proxy;
+  const ipQuality = payload.ipQuality;
+  const riskScore = ipQuality?.riskScore ?? 0;
+  const abuseScore = ipQuality?.abuseConfidence ?? 0;
+  const ipSignals: string[] = [];
+  if (ipQuality?.proxy) ipSignals.push("代理标记");
+  if (ipQuality?.vpn) ipSignals.push("VPN 标记");
+  if (ipQuality?.hosting) ipSignals.push("Hosting 标记");
+  if (ipQuality?.ipTypeLabel) ipSignals.push(`类型: ${ipQuality.ipTypeLabel}`);
+  if (typeof ipQuality?.riskScore === "number") ipSignals.push(`欺诈分 ${ipQuality.riskScore}/100`);
+  if (typeof ipQuality?.abuseConfidence === "number")
+    ipSignals.push(`Abuse ${ipQuality.abuseConfidence}%`);
+  const hostingRisk = !!ipQuality && (
+    ipQuality.ipType === "hosting" ||
+    ipQuality.ipType === "vpn" ||
+    ipQuality.hosting ||
+    ipQuality.proxy ||
+    riskScore >= 75 ||
+    abuseScore >= 50
+  );
   const creepTriggered = !!payload.creep?.canvasNoise || !!payload.creep?.webdriver || !!payload.creep?.mathLie;
   const webrtcTriggered = !!payload.webrtc?.leakDetected;
   const deviceTriggered = !!payload.fingerprint?.visitorId || payload.tzMismatch;
@@ -67,6 +92,9 @@ export const buildFindings = (payload: ScanPayload, scenarioId: ScenarioId): Sca
     let detail = finding.detail;
     if (finding.key === "hostingIp") {
       detail = `${detail} ${formatIpDetail(payload)}`;
+      if (ipSignals.length > 0) {
+        detail = `${detail} | 风险信号: ${ipSignals.join(" / ")}`;
+      }
     }
     if (finding.key === "creepLie" && creepNotes) {
       detail = `${detail} ${creepNotes}`;
